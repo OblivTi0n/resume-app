@@ -254,7 +254,7 @@ export default function ResumeSection({ resumeData, showAIGuide, onCloseAIGuide,
           <div className="overflow-auto">
             <ChatBox 
               chatLog={resumeData?.chat_log || []} 
-              activeInstruction={activeInstruction}
+              activeInstruction={typeof activeInstruction === 'string' ? { type: activeInstruction } : activeInstruction}
               onCloseGuide={onCloseGuide}
               onUpdateResume={onUpdateResume}
               resumeData={resumeData?.content}
@@ -279,7 +279,7 @@ export default function ResumeSection({ resumeData, showAIGuide, onCloseAIGuide,
           <div className="overflow-auto">
             <ChatBox 
               chatLog={resumeData?.chat_log || []} 
-              activeInstruction={activeInstruction}
+              activeInstruction={typeof activeInstruction === 'string' ? { type: activeInstruction } : activeInstruction}
               onCloseGuide={onCloseGuide}
               onUpdateResume={onUpdateResume}
               resumeData={resumeData?.content}

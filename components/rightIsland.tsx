@@ -1,8 +1,6 @@
- "use client";
+"use client";
 
 import React, { useState } from "react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,34 +13,48 @@ import {
   GripVertical,
   Trash2,
   ChevronUp,
+  ChevronDown,
   Save,
   Mail,
   Globe,
   Phone,
   Linkedin,
+  Wand2,
   MapPin,
-  Mic,
   Check,
   X,
+  User,
+  Briefcase,
+  FileText,
+  GraduationCap,
+  Wrench,
+  Link as LinkIcon,
 } from "lucide-react";
+
+// A simple helper to join class names.
+function cn(...classes: (string | false | null | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
+}
 
 // ---------------------
 // Define Interfaces
 // ---------------------
 interface Responsibility {
-    text: string
-    oldText?: string
-    mode?: "new" | "deletion" | "edit" | null
-  }
+  text: string;
+  oldText?: string;
+  mode?: "new" | "deletion" | "edit" | null;
+}
+
 interface WorkExperience {
-    company: string
-    location: string
-    role: string
-    start_date: string
-    end_date: string
-    responsibilities: Responsibility[]
-    mode?: "new" | null
-  }
+  company: string;
+  location: string;
+  role: string;
+  start_date: string;
+  end_date: string;
+  responsibilities: Responsibility[];
+  mode?: "new" | null;
+}
+
 export interface ResumeContent {
   personal_info: {
     name: string;
@@ -51,6 +63,11 @@ export interface ResumeContent {
     phone: string;
     email: string;
     portfolio: string;
+    // Added extra fields for this design:
+    role?: string;
+    country?: string;
+    firstName?: string;
+    lastName?: string;
   };
   professional_summary: string;
   education: {
@@ -60,7 +77,7 @@ export interface ResumeContent {
     graduation_date: string;
     scholarship: string;
   };
-  work_experience: WorkExperience[]
+  work_experience: WorkExperience[];
   volunteer_experience: any[];
   skills: string[];
   projects: any[];
@@ -73,323 +90,198 @@ export interface ResumeContent {
 interface RightIslandProps {
   resumeDatas: ResumeContent;
   onUpdate: (newData: ResumeContent) => void;
-  onShowAIGuide: (type: string) => void;
+  onShowAIGuide: (type: string, params?: { company?: string }) => void;
 }
+
 interface ResponsibilityListProps {
-    responsibilities: { resp: Responsibility; globalIndex: number }[]
-    experienceIndex: number
-    isEdit: boolean
-    updateResponsibilityText: (experienceIndex: number, globalIndex: number, text: string) => void
-    handleKeepResponsibility: (experienceIndex: number, globalIndex: number) => void
-    handleDeleteResponsibility: (experienceIndex: number, globalIndex: number) => void
-    confirmEditResponsibility: (experienceIndex: number, globalIndex: number) => void
-    cancelEditResponsibility: (experienceIndex: number, globalIndex: number) => void
-  }
-  
-  function ResponsibilityList({
-    responsibilities,
-    experienceIndex,
-    isEdit,
-    updateResponsibilityText,
-    handleKeepResponsibility,
-    handleDeleteResponsibility,
-    confirmEditResponsibility,
-    cancelEditResponsibility,
-  }: ResponsibilityListProps) {
-    return (
-      <div className="flex flex-col gap-2">
-        {responsibilities.map(({ resp, globalIndex }) => {
-          if (resp.mode === "edit") {
-            return (
-              <div key={globalIndex} className="flex flex-col gap-1 p-2 rounded">
-                <div className="text-sm text-gray-600">
-                  Original: {resp.oldText}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={resp.text}
-                    onChange={(e) =>
-                      updateResponsibilityText(
-                        experienceIndex,
-                        globalIndex,
-                        e.target.value
-                      )
-                    }
-                    className="w-full max-w-[1024px] border border-yellow-500"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-green-500"
-                    onClick={() =>
-                      confirmEditResponsibility(experienceIndex, globalIndex)
-                    }
-                  >
-                    <Check className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500"
-                    onClick={() =>
-                      cancelEditResponsibility(experienceIndex, globalIndex)
-                    }
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            )
-          } else if (resp.mode === "new") {
-            return (
-              <div
-                key={globalIndex}
-                className="flex items-center gap-2 p-2 rounded"
-              >
-                {isEdit ? (
-                  <>
-                    <Input
-                      value={resp.text}
-                      onChange={(e) =>
-                        updateResponsibilityText(
-                          experienceIndex,
-                          globalIndex,
-                          e.target.value
-                        )
-                      }
-                      className="w-full max-w-[1024px] border border-green-500"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-green-500"
-                      onClick={() =>
-                        handleKeepResponsibility(experienceIndex, globalIndex)
-                      }
-                    >
-                      <Check className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500"
-                      onClick={() =>
-                        handleDeleteResponsibility(experienceIndex, globalIndex)
-                      }
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <span>{resp.text}</span>
-                )}
-              </div>
-            )
-          } else {
-            // Normal responsibilities (mode is null)
-            return (
-              <div
-                key={globalIndex}
-                className="flex items-center gap-2 p-2 rounded"
-              >
-                {isEdit ? (
-                  <>
-                    <Input
-                      value={resp.text}
-                      onChange={(e) =>
-                        updateResponsibilityText(
-                          experienceIndex,
-                          globalIndex,
-                          e.target.value
-                        )
-                      }
-                      className="w-full max-w-[1024px] border" // default border styling only
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500"
-                      onClick={() =>
-                        handleDeleteResponsibility(experienceIndex, globalIndex)
-                      }
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2 w-full">
-                    <span>{resp.text}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 ml-auto"
-                      onClick={() =>
-                        handleDeleteResponsibility(experienceIndex, globalIndex)
-                      }
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )
-          }
-        })}
-      </div>
-    )
-  }
-  
+  responsibilities: { resp: Responsibility; globalIndex: number }[];
+  experienceIndex: number;
+  updateResponsibilityText: (
+    experienceIndex: number,
+    globalIndex: number,
+    text: string
+  ) => void;
+  handleDeleteResponsibility: (experienceIndex: number, globalIndex: number) => void;
+}
 
+function ResponsibilityList({
+  responsibilities,
+  experienceIndex,
+  updateResponsibilityText,
+  handleDeleteResponsibility,
+}: ResponsibilityListProps) {
+  const [editing, setEditing] = useState<{ [key: number]: boolean }>({});
 
-const RightIsland: React.FC<RightIslandProps> = ({ resumeDatas, onUpdate, onShowAIGuide }) => {
-    const [sortByDate, setSortByDate] = useState(false)
+  return (
+    <ul className="list-disc pl-5 space-y-2">
+      {responsibilities.map(({ resp, globalIndex }) => {
+        const isEditing = editing[globalIndex] ?? false;
+        return (
+          <li
+            key={globalIndex}
+            className="flex items-start justify-between text-gray-700 space-x-2"
+          >
+            {isEditing ? (
+              <Textarea
+                value={resp.text}
+                onChange={(e) =>
+                  updateResponsibilityText(experienceIndex, globalIndex, e.target.value)
+                }
+                className="flex-1 bg-gray-100 resize-y"
+                rows={2}
+                onBlur={() =>
+                  setEditing((prev) => ({ ...prev, [globalIndex]: false }))
+                }
+              />
+            ) : (
+              <Input
+                value={resp.text}
+                onClick={() =>
+                  setEditing((prev) => ({ ...prev, [globalIndex]: true }))
+                }
+                onChange={(e) =>
+                  updateResponsibilityText(experienceIndex, globalIndex, e.target.value)
+                }
+                className="flex-1 bg-gray-100"
+              />
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              title="improve with ai"
+              className="text-blue-600 mt-1"
+              onClick={() => console.log("Improve responsibility with AI")}
+            >
+              <Wand2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-600 mt-1"
+              onClick={() => handleDeleteResponsibility(experienceIndex, globalIndex)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
-  const [resumeData, setResumeData] = useState<ResumeContent>(resumeDatas)
+const ResumeEditor: React.FC<RightIslandProps> = ({
+  resumeDatas,
+  onUpdate,
+  onShowAIGuide,
+}) => {
+  const [resumeData, setResumeData] = useState<ResumeContent>(resumeDatas);
+  const [sortByDate, setSortByDate] = useState(false);
 
-  // Set work experience edit mode to true by default.
-  const [editMode, setEditMode] = useState({
-    personal_info: false,
-    professional_summary: false,
-    education: false,
-    work_experience: Array(resumeData.work_experience.length).fill(true),
-    skills: false,
-    social_media_and_links: false,
-  })
+  // Expanded sections for toggling
+  const [expandedSections, setExpandedSections] = useState({
+    personal_info: true,
+    work_experience: true,
+    professional_summary: true,
+    education: true,
+    skills: true,
+    social_media_and_links: true,
+  });
 
-  const toggleEditMode = (section: string, index?: number) => {
-    setEditMode((prev) => {
-      if (section === "work_experience" && typeof index === "number") {
-        const newWorkExperience = [...prev.work_experience]
-        newWorkExperience[index] = !newWorkExperience[index]
-        return { ...prev, work_experience: newWorkExperience }
-      }
-      return { ...prev, [section]: !prev[section as keyof typeof prev] }
-    })
-  }
+  const toggleExpandSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
 
   const handleInputChange = (
     section: string,
     field: string,
     value: string | string[],
-    index?: number,
+    index?: number
   ) => {
     setResumeData((prev) => {
       if (section === "work_experience" && typeof index === "number") {
-        const newWorkExperience = [...prev.work_experience]
-        newWorkExperience[index] = { ...newWorkExperience[index], [field]: value }
-        return { ...prev, work_experience: newWorkExperience }
+        const newWorkExperience = [...prev.work_experience];
+        newWorkExperience[index] = { ...newWorkExperience[index], [field]: value };
+        return { ...prev, work_experience: newWorkExperience };
       }
       if (
         section === "personal_info" ||
         section === "education" ||
         section === "social_media_and_links"
       ) {
-        return { 
-          ...prev, 
-          [section]: { 
-            ...(prev[section as keyof ResumeContent] as Record<string, any>), 
-            [field]: value 
-          } 
-        }
+        return {
+          ...prev,
+          [section]: {
+            ...(prev[section as keyof ResumeContent] as Record<string, any>),
+            [field]: value,
+          },
+        };
       }
-      return { ...prev, [section]: value }
-    })
-  }
+      return { ...prev, [section]: value };
+    });
+  };
 
-  // Update a responsibility's text by its global index.
+  // -------------------------------
+  // Responsibility functions
+  // -------------------------------
   const updateResponsibilityText = (
     experienceIndex: number,
     respGlobalIndex: number,
-    text: string,
+    text: string
   ) => {
     setResumeData((prev) => {
-      const newWorkExperience = [...prev.work_experience]
-      newWorkExperience[experienceIndex].responsibilities[respGlobalIndex].text = text
-      return { ...prev, work_experience: newWorkExperience }
-    })
-  }
+      const newWorkExperience = [...prev.work_experience];
+      newWorkExperience[experienceIndex].responsibilities[respGlobalIndex].text = text;
+      return { ...prev, work_experience: newWorkExperience };
+    });
+  };
 
-  // Add a new responsibility with mode "new"
   const addResponsibility = (experienceIndex: number) => {
     setResumeData((prev) => {
-      const newWorkExperience = [...prev.work_experience]
+      const newWorkExperience = [...prev.work_experience];
       newWorkExperience[experienceIndex].responsibilities.push({
         text: "New responsibility",
         mode: "new",
-      })
-      return { ...prev, work_experience: newWorkExperience }
-    })
-  }
+      });
+      return { ...prev, work_experience: newWorkExperience };
+    });
+  };
 
-  // Remove a responsibility completely.
   const removeResponsibility = (experienceIndex: number, globalRespIndex: number) => {
     setResumeData((prev) => {
-      const newWorkExperience = [...prev.work_experience]
-      newWorkExperience[experienceIndex].responsibilities.splice(globalRespIndex, 1)
-      return { ...prev, work_experience: newWorkExperience }
-    })
-  }
+      const newWorkExperience = [...prev.work_experience];
+      newWorkExperience[experienceIndex].responsibilities.splice(globalRespIndex, 1);
+      return { ...prev, work_experience: newWorkExperience };
+    });
+  };
 
-  // For responsibilities with mode "new" or "deletion": keep them (i.e. remove the mode flag)
-  const handleKeepResponsibility = (experienceIndex: number, globalRespIndex: number) => {
-    setResumeData((prev) => {
-      const newWorkExperience = [...prev.work_experience]
-      newWorkExperience[experienceIndex].responsibilities[globalRespIndex].mode = null
-      return { ...prev, work_experience: newWorkExperience }
-    })
-  }
-
-  // For responsibilities with mode "new" or "deletion": delete them entirely
-  const handleDeleteResponsibility = (experienceIndex: number, globalRespIndex: number) => {
-    removeResponsibility(experienceIndex, globalRespIndex)
-  }
-
-  // For responsibilities in edit mode: confirm the edit (replace the old text with the new one and clear the mode)
-  const confirmEditResponsibility = (experienceIndex: number, globalRespIndex: number) => {
-    setResumeData((prev) => {
-      const newWorkExperience = [...prev.work_experience]
-      // On confirm, update text remains as entered; remove the oldText and clear mode.
-      delete newWorkExperience[experienceIndex].responsibilities[globalRespIndex].oldText
-      newWorkExperience[experienceIndex].responsibilities[globalRespIndex].mode = null
-      return { ...prev, work_experience: newWorkExperience }
-    })
-  }
-
-  // For responsibilities in edit mode: cancel the edit (revert the new text to the old text and clear the mode)
-  const cancelEditResponsibility = (experienceIndex: number, globalRespIndex: number) => {
-    setResumeData((prev) => {
-      const newWorkExperience = [...prev.work_experience]
-      const responsibility = newWorkExperience[experienceIndex].responsibilities[globalRespIndex]
-      responsibility.text = responsibility.oldText || responsibility.text
-      delete responsibility.oldText
-      responsibility.mode = null
-      return { ...prev, work_experience: newWorkExperience }
-    })
-  }
-
-  // Bulk actions for the "To Be Deleted" section.
   const handleKeepAllToBeDeleted = (experienceIndex: number) => {
     setResumeData((prev) => {
-      const newWorkExperience = [...prev.work_experience]
+      const newWorkExperience = [...prev.work_experience];
       newWorkExperience[experienceIndex].responsibilities = newWorkExperience[
         experienceIndex
       ].responsibilities.map((resp) =>
-        resp.mode === "deletion" ? { ...resp, mode: null } : resp,
-      )
-      return { ...prev, work_experience: newWorkExperience }
-    })
-  }
+        resp.mode === "deletion" ? { ...resp, mode: null } : resp
+      );
+      return { ...prev, work_experience: newWorkExperience };
+    });
+  };
 
   const handleDeleteAllToBeDeleted = (experienceIndex: number) => {
     setResumeData((prev) => {
-      const newWorkExperience = [...prev.work_experience]
+      const newWorkExperience = [...prev.work_experience];
       newWorkExperience[experienceIndex].responsibilities = newWorkExperience[
         experienceIndex
-      ].responsibilities.filter((resp) => resp.mode !== "deletion")
-      return { ...prev, work_experience: newWorkExperience }
-    })
-  }
+      ].responsibilities.filter((resp) => resp.mode !== "deletion");
+      return { ...prev, work_experience: newWorkExperience };
+    });
+  };
 
+  // -------------------------------
+  // Work Experience & Skills functions
+  // -------------------------------
   const addWorkExperience = () => {
     setResumeData((prev) => ({
       ...prev,
@@ -410,503 +302,551 @@ const RightIsland: React.FC<RightIslandProps> = ({ resumeDatas, onUpdate, onShow
           mode: "new",
         },
       ],
-    }))
-    setEditMode((prev) => ({
-      ...prev,
-      work_experience: [...prev.work_experience, true],
-    }))
-  }
+    }));
+  };
 
   const removeWorkExperience = (index: number) => {
     setResumeData((prev) => ({
       ...prev,
       work_experience: prev.work_experience.filter((_, i) => i !== index),
-    }))
-    setEditMode((prev) => ({
-      ...prev,
-      work_experience: prev.work_experience.filter((_, i) => i !== index),
-    }))
-  }
+    }));
+  };
 
   const addSkill = () => {
     setResumeData((prev) => ({
       ...prev,
       skills: [...prev.skills, "New Skill"],
-    }))
-  }
+    }));
+  };
 
   const removeSkill = (index: number) => {
     setResumeData((prev) => ({
       ...prev,
       skills: prev.skills.filter((_, i) => i !== index),
-    }))
-  }
-
-  const handleDeleteNewExperience = (index: number) => {
-    setResumeData((prev) => ({
-      ...prev,
-      work_experience: prev.work_experience.filter((_, i) => i !== index),
-    }))
-    setEditMode((prev) => ({
-      ...prev,
-      work_experience: prev.work_experience.filter((_, i) => i !== index),
-    }))
-  }
-
-  const handleConfirmNewExperience = (index: number) => {
-    setResumeData((prev) => ({
-      ...prev,
-      work_experience: prev.work_experience.map((exp, i) =>
-        i === index ? { ...exp, mode: null } : exp,
-      ),
-    }))
-    setEditMode((prev) => ({
-      ...prev,
-      work_experience: prev.work_experience.map((_, i) => (i === index ? false : _)),
-    }))
-  }
+    }));
+  };
 
   return (
-<div className="bg-white rounded-xl shadow-sm p-6 h-full overflow-y-auto">
-<Accordion type="single" collapsible className="space-y-4">
-        {/* Contact Information */}
-        <AccordionItem value="contact" className="border rounded-lg">
-          <AccordionTrigger className="px-4">Contact Information</AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center space-x-4 mb-4">
-                  <Avatar className="w-20 h-20">
-                    <AvatarImage src="/placeholder.svg" alt={resumeData.personal_info.name} />
-                    <AvatarFallback>
-                      {resumeData.personal_info.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h2 className="text-2xl font-bold">{resumeData.personal_info.name}</h2>
-                    <p className="text-muted-foreground">{resumeData.personal_info.location}</p>
+    <div className="min-h-screen bg-gray-50 p-8 overflow-auto">
+      <div className="mx-auto w-full space-y-8">
+        {/* Personal Information */}
+        <section className="bg-white rounded-lg shadow-sm overflow-auto">
+          <div
+            className="flex items-center justify-between p-6 cursor-pointer"
+            onClick={() => toggleExpandSection("personal_info")}
+          >
+            <div className="flex items-center space-x-3">
+              <User className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-semibold text-gray-900">
+                Personal Information
+              </h2>
+            </div>
+            {expandedSections.personal_info ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </div>
+          {expandedSections.personal_info && (
+            <div className="p-6 pt-0">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="col-span-2 flex justify-between items-start">
+                  <div className="space-y-1.5">
+                    <label className="block text-sm font-medium text-gray-500">
+                      Job Title
+                    </label>
+                    <Input
+                      placeholder="The role you want"
+                      value={resumeData.personal_info.role || ""}
+                      onChange={(e) =>
+                        handleInputChange("personal_info", "role", e.target.value)
+                      }
+                      className="bg-gray-100"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <div className="mb-2">
+                      <Avatar className="w-24 h-24">
+                        <AvatarImage
+                          src="/placeholder.svg"
+                          alt={resumeData.personal_info.name}
+                        />
+                        <AvatarFallback>
+                          {resumeData.personal_info.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                    <Button variant="link" className="text-blue-500">
+                      Upload photo
+                    </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(resumeData.personal_info).map(([key, value]) => (
-                    <div key={key} className="flex items-center space-x-2">
-                      {key === "email" && <Mail className="w-4 h-4 text-muted-foreground" />}
-                      {key === "phone" && <Phone className="w-4 h-4 text-muted-foreground" />}
-                      {key === "location" && <MapPin className="w-4 h-4 text-muted-foreground" />}
-                      {key === "linkedin" && <Linkedin className="w-4 h-4 text-muted-foreground" />}
-                      {key === "portfolio" && <Globe className="w-4 h-4 text-muted-foreground" />}
-                      {editMode.personal_info ? (
-                        <Input
-                          value={value}
-                          onChange={(e) => handleInputChange("personal_info", key, e.target.value)}
-                          className="w-full max-w-[1024px]"
-                        />
-                      ) : (
-                        <span>{value}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <Button onClick={() => toggleEditMode("personal_info")} className="mt-4">
-                  {editMode.personal_info ? <Save className="w-4 h-4 mr-2" /> : <PenLine className="w-4 h-4 mr-2" />}
-                  {editMode.personal_info ? "Save" : "Edit"}
-                </Button>
-              </CardContent>
-            </Card>
-          </AccordionContent>
-        </AccordionItem>
 
-        {/* Professional Summary */}
-        <AccordionItem value="summary" className="border rounded-lg">
-          <AccordionTrigger className="px-4">Professional Summary</AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <Card>
-              <CardContent className="pt-6">
-                {editMode.professional_summary ? (
-                  <Textarea
-                    value={resumeData.professional_summary}
-                    onChange={(e) => handleInputChange("professional_summary", "", e.target.value)}
-                    className="w-full max-w-[1024px] min-h-[100px]"
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-gray-500">
+                    First Name
+                  </label>
+                  <Input
+                    value={
+                      resumeData.personal_info.firstName ||
+                      resumeData.personal_info.name.split(" ")[0]
+                    }
+                    onChange={(e) => {
+                      const firstName = e.target.value;
+                      const lastName =
+                        resumeData.personal_info.lastName ||
+                        resumeData.personal_info.name.split(" ").slice(1).join(" ");
+                      handleInputChange(
+                        "personal_info",
+                        "name",
+                        `${firstName} ${lastName}`
+                      );
+                      handleInputChange("personal_info", "firstName", firstName);
+                    }}
+                    className="bg-gray-100"
                   />
-                ) : (
-                  <p className="text-muted-foreground">{resumeData.professional_summary}</p>
-                )}
-                <Button onClick={() => toggleEditMode("professional_summary")} className="mt-4">
-                  {editMode.professional_summary ? (
-                    <Save className="w-4 h-4 mr-2" />
-                  ) : (
-                    <PenLine className="w-4 h-4 mr-2" />
-                  )}
-                  {editMode.professional_summary ? "Save" : "Edit"}
-                </Button>
-              </CardContent>
-            </Card>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Education */}
-        <AccordionItem value="education" className="border rounded-lg">
-          <AccordionTrigger className="px-4">Education</AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  {Object.entries(resumeData.education).map(([key, value]) => (
-                    <div key={key} className="flex flex-col">
-                      <strong className="text-sm text-muted-foreground uppercase">{key.replace("_", " ")}:</strong>
-                      {editMode.education ? (
-                        <Input
-                          value={value}
-                          onChange={(e) => handleInputChange("education", key, e.target.value)}
-                          className="w-full max-w-[1024px] mt-1"
-                        />
-                      ) : (
-                        <span className="text-lg">{value}</span>
-                      )}
-                    </div>
-                  ))}
-                  <Button onClick={() => toggleEditMode("education")} className="mt-2">
-                    {editMode.education ? <Save className="w-4 h-4 mr-2" /> : <PenLine className="w-4 h-4 mr-2" />}
-                    {editMode.education ? "Save" : "Edit"}
-                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </AccordionContent>
-        </AccordionItem>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-gray-500">
+                    Last Name
+                  </label>
+                  <Input
+                    value={
+                      resumeData.personal_info.lastName ||
+                      resumeData.personal_info.name.split(" ").slice(1).join(" ")
+                    }
+                    onChange={(e) => {
+                      const lastName = e.target.value;
+                      const firstName =
+                        resumeData.personal_info.firstName ||
+                        resumeData.personal_info.name.split(" ")[0];
+                      handleInputChange(
+                        "personal_info",
+                        "name",
+                        `${firstName} ${lastName}`
+                      );
+                      handleInputChange("personal_info", "lastName", lastName);
+                    }}
+                    className="bg-gray-100"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-gray-500">
+                    Email
+                  </label>
+                  <Input
+                    value={resumeData.personal_info.email}
+                    onChange={(e) =>
+                      handleInputChange("personal_info", "email", e.target.value)
+                    }
+                    className="bg-gray-100"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-gray-500">
+                    Phone
+                  </label>
+                  <Input
+                    value={resumeData.personal_info.phone}
+                    onChange={(e) =>
+                      handleInputChange("personal_info", "phone", e.target.value)
+                    }
+                    className="bg-gray-100"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-gray-500">
+                    Country
+                  </label>
+                  <Input
+                    value={resumeData.personal_info.country || ""}
+                    onChange={(e) =>
+                      handleInputChange("personal_info", "country", e.target.value)
+                    }
+                    className="bg-gray-100"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-sm font-medium text-gray-500">
+                    City
+                  </label>
+                  <Input
+                    value={resumeData.personal_info.location}
+                    onChange={(e) =>
+                      handleInputChange("personal_info", "location", e.target.value)
+                    }
+                    className="bg-gray-100"
+                  />
+                </div>
+
+              
+              </div>
+            </div>
+          )}
+        </section>
 
         {/* Work Experience */}
-        <AccordionItem value="experience" className="border rounded-lg">
-          <AccordionTrigger className="px-4">Work Experience</AccordionTrigger>
-          <AccordionContent>
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <Button variant="outline" className="flex items-center gap-2" onClick={addWorkExperience}>
-                  <Plus className="w-4 h-4" />
+        <section className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div
+            className="flex items-center justify-between p-6 cursor-pointer"
+            onClick={() => toggleExpandSection("work_experience")}
+          >
+            <div className="flex items-center space-x-3">
+              <Briefcase className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-semibold text-gray-900">
+                Work Experience
+              </h2>
+            </div>
+            {expandedSections.work_experience ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </div>
+          {expandedSections.work_experience && (
+            <div className="p-6 pt-0">
+              <div className="flex items-center justify-between mb-4">
+                <Button
+                  variant="outline"
+                  className="flex items-center"
+                  onClick={addWorkExperience}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Work Experience
                 </Button>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">Sort by Date</span>
                   <Switch checked={sortByDate} onCheckedChange={setSortByDate} />
                 </div>
               </div>
+              <div className="space-y-6">
+                {resumeData.work_experience.map((experience, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "border rounded-lg p-4",
+                      experience.mode === "new" && "border-green-500"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        <Input
+                          value={experience.company}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "work_experience",
+                              "company",
+                              e.target.value,
+                              index
+                            )
+                          }
+                          className="font-semibold bg-gray-100"
+                        />
+                      </h3>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="ghost" size="sm">
+                          <GripVertical className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeWorkExperience(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <>
+                        <Input
+                          value={experience.role}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "work_experience",
+                              "role",
+                              e.target.value,
+                              index
+                            )
+                          }
+                          placeholder="Role"
+                          className="bg-gray-100"
+                        />
+                        <Input
+                          value={experience.location}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "work_experience",
+                              "location",
+                              e.target.value,
+                              index
+                            )
+                          }
+                          placeholder="Location"
+                          className="bg-gray-100"
+                        />
+                        <Input
+                          value={experience.start_date}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "work_experience",
+                              "start_date",
+                              e.target.value,
+                              index
+                            )
+                          }
+                          placeholder="Start Date"
+                          className="bg-gray-100"
+                        />
+                        <Input
+                          value={experience.end_date}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "work_experience",
+                              "end_date",
+                              e.target.value,
+                              index
+                            )
+                          }
+                          placeholder="End Date"
+                          className="bg-gray-100"
+                        />
+                      </>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium text-gray-900">
+                          Responsibilities:
+                        </h4>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full"
+                          onClick={() => onShowAIGuide("enhance_work_experience", { company: experience.company })}
+                        >
+                          <Wand2 className="w-4 h-4 mr-2" />
+                          write with AI
+                        </Button>
+                      </div>
+                      <ResponsibilityList
+                        responsibilities={experience.responsibilities.map((resp, i) => ({
+                          resp,
+                          globalIndex: i,
+                        }))}
+                        experienceIndex={index}
+                        updateResponsibilityText={updateResponsibilityText}
+                        handleDeleteResponsibility={removeResponsibility}
+                      />
+                    </div>
+                    <div className="mt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addResponsibility(index);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Responsibility
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
 
+        {/* Professional Summary */}
+        <section className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div
+            className="flex items-center justify-between p-6 cursor-pointer"
+            onClick={() => toggleExpandSection("professional_summary")}
+          >
+            <div className="flex items-center space-x-3">
+              <FileText className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-semibold text-gray-900">
+                Professional Summary
+              </h2>
+            </div>
+            {expandedSections.professional_summary ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </div>
+          {expandedSections.professional_summary && (
+            <div className="p-6 pt-0">
+              <Textarea
+                value={resumeData.professional_summary}
+                onChange={(e) =>
+                  handleInputChange(
+                    "professional_summary",
+                    "",
+                    e.target.value
+                  )
+                }
+                className="w-full min-h-[150px] bg-gray-100"
+              />
+            </div>
+          )}
+        </section>
+
+        {/* Education */}
+        <section className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div
+            className="flex items-center justify-between p-6 cursor-pointer"
+            onClick={() => toggleExpandSection("education")}
+          >
+            <div className="flex items-center space-x-3">
+              <GraduationCap className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-semibold text-gray-900">Education</h2>
+            </div>
+            {expandedSections.education ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </div>
+          {expandedSections.education && (
+            <div className="p-6 pt-0">
               <div className="space-y-4">
-                {resumeData.work_experience.map((experience, expIndex) => {
-                  // Split responsibilities into two groups:
-                  // normalResp: responsibilities that are not marked for deletion
-                  // toBeDeleted: responsibilities with mode "deletion"
-                  const normalResp: { resp: Responsibility; globalIndex: number }[] = []
-                  const toBeDeleted: { resp: Responsibility; globalIndex: number }[] = []
-                  experience.responsibilities.forEach((resp, i) => {
-                    if (resp.mode === "deletion") {
-                      toBeDeleted.push({ resp, globalIndex: i })
-                    } else {
-                      normalResp.push({ resp, globalIndex: i })
-                    }
-                  })
+                {Object.entries(resumeData.education).map(([key, value]) => (
+                  <div key={key} className="flex flex-col">
+                    <strong className="text-sm font-medium text-gray-500 uppercase">
+                      {key.replace("_", " ")}:
+                    </strong>
+                    <Input
+                      value={value}
+                      onChange={(e) =>
+                        handleInputChange("education", key, e.target.value)
+                      }
+                      className="mt-1 bg-gray-100"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
 
-                  return (
-                    <div
-                      key={expIndex}
-                      className={`border rounded-lg ${experience.mode === "new" ? "border-green-500 border-2" : ""}`}
-                    >
-                      <div className="p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-medium">
-                            {editMode.work_experience[expIndex] ? (
-                              <Input
-                                value={experience.company}
-                                onChange={(e) =>
-                                  handleInputChange("work_experience", "company", e.target.value, expIndex)
-                                }
-                                className="w-full max-w-[1024px]"
-                              />
-                            ) : (
-                              experience.company
-                            )}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            {experience.mode === "new" ? (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-green-500"
-                                  onClick={() => handleConfirmNewExperience(expIndex)}
-                                >
-                                  <Check className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-red-500"
-                                  onClick={() => handleDeleteNewExperience(expIndex)}
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </>
-                            ) : (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => toggleEditMode("work_experience", expIndex)}
-                                >
-                                  {editMode.work_experience[expIndex] ? (
-                                    <Save className="w-4 h-4" />
-                                  ) : (
-                                    <PenLine className="w-4 h-4" />
-                                  )}
-                                </Button>
-                                <Button variant="ghost" size="icon">
-                                  <GripVertical className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => removeWorkExperience(expIndex)}>
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon">
-                                  <ChevronUp className="w-4 h-4" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
+        {/* Skills */}
+        <section className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div
+            className="flex items-center justify-between p-6 cursor-pointer"
+            onClick={() => toggleExpandSection("skills")}
+          >
+            <div className="flex items-center space-x-3">
+              <Wrench className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-semibold text-gray-900">Skills</h2>
+            </div>
+            {expandedSections.skills ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </div>
+          {expandedSections.skills && (
+            <div className="p-6 pt-0">
+              <div className="flex flex-wrap gap-2">
+                {resumeData.skills.map((skill, index) => (
+                  <div key={index} className="flex items-center">
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        value={skill}
+                        onChange={(e) => {
+                          const newSkills = [...resumeData.skills];
+                          newSkills[index] = e.target.value;
+                          handleInputChange("skills", "", newSkills);
+                        }}
+                        className="w-32 bg-gray-100"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeSkill(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <div className="mt-4">
+                  <Button variant="outline" onClick={addSkill}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Skill
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
 
-                        {/* Role, Location, Start Date, End Date */}
-                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                          {editMode.work_experience[expIndex] || experience.mode === "new" ? (
-                            <>
-                              <Input
-                                value={experience.role}
-                                onChange={(e) =>
-                                  handleInputChange("work_experience", "role", e.target.value, expIndex)
-                                }
-                                className="w-full max-w-[1024px]"
-                              />
-                              <Input
-                                value={experience.location}
-                                onChange={(e) =>
-                                  handleInputChange("work_experience", "location", e.target.value, expIndex)
-                                }
-                                className="w-full max-w-[1024px]"
-                              />
-                              <Input
-                                value={experience.start_date}
-                                onChange={(e) =>
-                                  handleInputChange("work_experience", "start_date", e.target.value, expIndex)
-                                }
-                                className="w-full max-w-[1024px]"
-                              />
-                              <Input
-                                value={experience.end_date}
-                                onChange={(e) =>
-                                  handleInputChange("work_experience", "end_date", e.target.value, expIndex)
-                                }
-                                className="w-full max-w-[1024px]"
-                              />
-                            </>
-                          ) : (
-                            <>
-                              <span>{experience.role}</span>
-                              <span>{experience.location}</span>
-                              <span>
-                                {experience.start_date} - {experience.end_date}
-                              </span>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Responsibilities */}
-                        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                          <div className="flex flex-col gap-4">
-                            <div className="flex flex-col">
-                              <strong className="mb-2">Responsibilities</strong>
-                              {/* Render normal (non-deletion) responsibilities using the ResponsibilityList component */}
-                              <ResponsibilityList
-                                responsibilities={normalResp}
-                                experienceIndex={expIndex}
-                                isEdit={editMode.work_experience[expIndex]}
-                                updateResponsibilityText={updateResponsibilityText}
-                                handleKeepResponsibility={handleKeepResponsibility}
-                                handleDeleteResponsibility={handleDeleteResponsibility}
-                                confirmEditResponsibility={confirmEditResponsibility}
-                                cancelEditResponsibility={cancelEditResponsibility}
-                              />
-                              {editMode.work_experience[expIndex] && (
-                                <Button
-                                  variant="ghost"
-                                  className="flex items-center gap-2 mt-2"
-                                  onClick={() => addResponsibility(expIndex)}
-                                >
-                                  <Plus className="w-4 h-4" />
-                                  Add Responsibility
-                                </Button>
-                              )}
-                            </div>
-
-                            {toBeDeleted.length > 0 && (
-                              <div className="border-t pt-4">
-                                <strong className="mb-2 block text-red-600">To Be Deleted</strong>
-                                {toBeDeleted.map(({ resp, globalIndex }) => (
-                                  <div key={globalIndex} className="flex items-center gap-2 p-2 rounded">
-                                    {editMode.work_experience[expIndex] ? (
-                                      <>
-                                        <Input
-                                          value={resp.text}
-                                          onChange={(e) =>
-                                            updateResponsibilityText(expIndex, globalIndex, e.target.value)
-                                          }
-                                          className="w-full max-w-[1024px] border border-red-500"
-                                        />
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="text-green-500"
-                                          onClick={() => handleKeepResponsibility(expIndex, globalIndex)}
-                                        >
-                                          <Check className="w-4 h-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="text-red-500"
-                                          onClick={() => handleDeleteResponsibility(expIndex, globalIndex)}
-                                        >
-                                          <X className="w-4 h-4" />
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <span>{resp.text}</span>
-                                    )}
-                                  </div>
-                                ))}
-                                {editMode.work_experience[expIndex] && (
-                                  <div className="flex gap-2 mt-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleKeepAllToBeDeleted(expIndex)}
-                                    >
-                                      <Check className="w-4 h-4 mr-1" />
-                                      Keep All
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDeleteAllToBeDeleted(expIndex)}
-                                    >
-                                      <X className="w-4 h-4 mr-1" />
-                                      Delete All
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
+        {/* Social Media and Links */}
+        <section className="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div
+            className="flex items-center justify-between p-6 cursor-pointer"
+            onClick={() => toggleExpandSection("social_media_and_links")}
+          >
+            <div className="flex items-center space-x-3">
+              <LinkIcon className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-semibold text-gray-900">
+                Social Media and Links
+              </h2>
+            </div>
+            {expandedSections.social_media_and_links ? (
+              <ChevronUp className="w-5 h-5 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-500" />
+            )}
+          </div>
+          {expandedSections.social_media_and_links && (
+            <div className="p-6 pt-0">
+              <div className="space-y-4">
+                {Object.entries(resumeData.social_media_and_links).map(
+                  ([key, value]) => (
+                    <div key={key} className="flex items-center space-x-2">
+                      {key === "linkedin" && (
+                        <Linkedin className="w-5 h-5 text-gray-400" />
+                      )}
+                      {key === "portfolio" && (
+                        <Globe className="w-5 h-5 text-gray-400" />
+                      )}
+                      <div className="flex-grow">
+                        <strong className="text-sm font-medium text-gray-500 uppercase">
+                          {key}:
+                        </strong>
+                        <Input
+                          value={value}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "social_media_and_links",
+                              key,
+                              e.target.value
+                            )
+                          }
+                          className="mt-1 bg-gray-100"
+                        />
                       </div>
                     </div>
                   )
-                })}
+                )}
               </div>
             </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Skills */}
-        <AccordionItem value="skills" className="border rounded-lg">
-          <AccordionTrigger className="px-4">Skills</AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-wrap gap-2">
-                  {resumeData.skills.map((skill, index) => (
-                    <div key={index} className="flex items-center">
-                      {editMode.skills ? (
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            value={skill}
-                            onChange={(e) => {
-                              const newSkills = [...resumeData.skills]
-                              newSkills[index] = e.target.value
-                              handleInputChange("skills", "", newSkills)
-                            }}
-                            className="w-full max-w-[1024px]"
-                          />
-                          <Button variant="ghost" size="icon" onClick={() => removeSkill(index)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <Badge variant="secondary" className="text-sm">
-                          {skill}
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 flex justify-between">
-                  <Button onClick={() => toggleEditMode("skills")}>
-                    {editMode.skills ? <Save className="w-4 h-4 mr-2" /> : <PenLine className="w-4 h-4 mr-2" />}
-                    {editMode.skills ? "Save" : "Edit"}
-                  </Button>
-                  {editMode.skills && (
-                    <Button variant="outline" onClick={addSkill}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Skill
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* Social Media and Links */}
-        <AccordionItem value="links" className="border rounded-lg">
-          <AccordionTrigger className="px-4">Social Media and Links</AccordionTrigger>
-          <AccordionContent className="px-4 pb-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  {Object.entries(resumeData.social_media_and_links).map(([key, value]) => (
-                    <div key={key} className="flex items-center space-x-2">
-                      {key === "linkedin" && <Linkedin className="w-4 h-4 text-muted-foreground" />}
-                      {key === "portfolio" && <Globe className="w-4 h-4 text-muted-foreground" />}
-                      <div className="flex-grow">
-                        <strong className="text-sm text-muted-foreground uppercase">{key}:</strong>
-                        {editMode.social_media_and_links ? (
-                          <Input
-                            value={value}
-                            onChange={(e) => handleInputChange("social_media_and_links", key, e.target.value)}
-                            className="w-full max-w-[1024px] mt-1"
-                          />
-                        ) : (
-                          <p className="text-sm">{value}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  <Button onClick={() => toggleEditMode("social_media_and_links")} className="mt-2">
-                    {editMode.social_media_and_links ? (
-                      <Save className="w-4 h-4 mr-2" />
-                    ) : (
-                      <PenLine className="w-4 h-4 mr-2" />
-                    )}
-                    {editMode.social_media_and_links ? "Save" : "Edit"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+          )}
+        </section>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default RightIsland;
+export default ResumeEditor;

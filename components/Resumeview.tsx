@@ -188,7 +188,7 @@ export default function ResumeView({ data, allignment }: ResumeViewProps) {
         resumeEl.style.transform = `scale(${scale})`;
         // Set transform origin so scaling occurs from the top left
         if (allignment) {
-          resumeEl.style.transformOrigin = "top left";
+          resumeEl.style.transformOrigin = "top center";
         } else {
           resumeEl.style.transformOrigin = "top center";
         }
@@ -207,7 +207,7 @@ export default function ResumeView({ data, allignment }: ResumeViewProps) {
   }, [userZoom]); // add userZoom as a dependency
 
   return (
-    <div>
+    <div className="bg-gray-50">
       {/* Inline styles */}
       <style>{`
         /* For print, force A4 pages */

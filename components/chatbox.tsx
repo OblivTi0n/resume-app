@@ -24,6 +24,34 @@ interface AIInstruction {
   prompt: string;
 }
 
+interface ChatMessage {
+  role: string;
+  content: string;
+  timestamp: string;
+}
+
+interface ChatBoxProps {
+  chatLog?: Array<{
+    role: string
+    content: string
+    timestamp: string
+  }>
+  activeInstruction?: { type: string; company?: string } | null
+  onCloseGuide?: () => void
+  onUpdateResume?: (path: string[], value: any) => void
+  resumeData?: any
+}
+
+function ChatBox({ chatLog = [], activeInstruction, onCloseGuide, onUpdateResume, resumeData }: ChatBoxProps) {
+  const [messages, setMessages] = useState<ChatMessage[]>(chatLog)
+  const [inputMessage, setInputMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const searchParams = useSearchParams()
+  const resumeId = searchParams.get("id")
+
+
+
 const AI_INSTRUCTIONS: Record<string, AIInstruction> = {
   add_work_experience: {
     name: "Add a new work experience",
@@ -42,35 +70,64 @@ const AI_INSTRUCTIONS: Record<string, AIInstruction> = {
       ]
     }`
   },
-  // Add more instructions here
+  enhance_work_experience: {
+    name: "Enhance Work Experience Responsibilities",
+    description: "I can help you enhance the responsibilities for your work experience. Please provide details regarding your work experience to improve your responsibilities.",
+    prompt: `You are an expert resume writer. 
+    You will receive the user's current resume in JSON format along with the specific work experience company they want to enhance. Your task is to craft responsibilities for that work experience based on the user's instructions, ensuring you follow these guidelines:
+
+    user's Resume:
+   ${JSON.stringify(resumeData)}
+   user's work experience company: ${activeInstruction?.company}
+    STAR Method:
+    
+    Use the STAR method (Situation, Task, Action, Result) when writing the responsibilities. If the user provides comprehensive STAR details or key keywords for each role, craft one separate bullet point per role. If the explanation is vague or incomplete, ask minimal follow-up questions to obtain the necessary STAR details.
+    
+    Remember you should ask questions leading to get information that is usefull to create good list of responsibilities so that a recruiter will understand what did they do in that work experience well.
+    
+    XYZ Method:
+    
+    Once you have sufficient information, create concise and impactful bullet points using the XYZ method:
+    X: The achievement or accomplishment
+    Y: The context or scope of the project or responsibility
+    Z: The measurable or specific outcome
+    Each bullet point should focus on a unique skill set or role and include missing keywords naturally, quantifying results wherever possible.
+    Incomplete Information:
+    
+    If the user doesn't provide complete information regarding the STAR method, do not ask any additional questions beyond the minimal follow-ups. Instead, create the responsibilities list/bullet points with the available details.
+    Output Format:
+    
+    Deliver the final bullet points in the following JSON format so that the user can directly add them to their resume:
+    json
+    {
+      "work_experience": [
+        {
+          "role": "Full Stack Developer",
+          "company": "Retr CRM - AI Customer Relationship Management Software Agency",
+          "end_date": "December 2024",
+          "location": "Melbourne, Australia",
+          "start_date": "January 2024",
+          "responsibilities": [
+            {
+              "mode": null,
+              "text": "responsibility 1"
+            },
+            {
+              "mode": null,
+              "text": "responsibility 2"
+            },
+            {
+              "mode": null,
+              "text": "responsibility 3"
+            }
+          ]
+        }
+      ]
+    }
+    
+    For the instruction ask the user regarding their work experience`
+  },
 };
-
-interface ChatMessage {
-  role: string;
-  content: string;
-  timestamp: string;
-}
-
-interface ChatBoxProps {
-  chatLog?: Array<{
-    role: string
-    content: string
-    timestamp: string
-  }>
-  activeInstruction?: string
-  onCloseGuide?: () => void
-  onUpdateResume?: (path: string[], value: any) => void
-  resumeData?: any
-}
-
-function ChatBox({ chatLog = [], activeInstruction, onCloseGuide, onUpdateResume, resumeData }: RightIslandProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>(chatLog)
-  const [inputMessage, setInputMessage] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const searchParams = useSearchParams()
-  const resumeId = searchParams.get("id")
-
   // Add this useEffect to sync with incoming prop changes
   useEffect(() => {
     setMessages(chatLog)
@@ -84,7 +141,7 @@ function ChatBox({ chatLog = [], activeInstruction, onCloseGuide, onUpdateResume
   }, [messages])
 
   // Get current instruction
-  const currentInstruction = activeInstruction ? AI_INSTRUCTIONS[activeInstruction] : null;
+  const currentInstruction = activeInstruction ? AI_INSTRUCTIONS[activeInstruction.type] : null;
 console.log(currentInstruction)
   // Send message
   const handleSendMessage = async () => {
@@ -112,7 +169,7 @@ console.log(currentInstruction)
       if (currentInstruction) {
         console.log(`currentInstruction: ${currentInstruction}`)
         requestBody.assistantMessage = currentInstruction.description;
-        requestBody.prompt = currentInstruction.prompt;
+        requestBody.prompt = currentInstruction.prompt + (activeInstruction?.company ? `\n\nCompany: ${activeInstruction.company}` : '');
       }
   
       // Send message to your server

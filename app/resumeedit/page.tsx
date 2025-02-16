@@ -99,10 +99,10 @@ function ResumeEditPageContent() {
     <div className="flex h-screen bg-gray-50">
       {!isMobile && <AppSidebar navigation={navigation} />}
       <div className="flex-1 min-h-screen bg-background flex flex-col">
-        <Navbar onJobMatchingClick={() => setShowJobList(true)} />
+        {/* <Navbar onJobMatchingClick={() => setShowJobList(true)} /> */}
         <main className="flex-1 overflow-hidden">
-          <ResizablePanelGroup direction="horizontal">
-            <ResizablePanel defaultSize={50} minSize={30}>
+          {/* <ResizablePanelGroup direction="horizontal"> */}
+            {/* <ResizablePanel defaultSize={50} minSize={30}>
               <div className="h-full overflow-hidden">
                 <ResumeSection 
                   resumeData={resumeData} 
@@ -134,9 +134,9 @@ function ResumeEditPageContent() {
                   }}
                 />
               </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={50} minSize={30}>
+            </ResizablePanel> */}
+            {/* <ResizableHandle withHandle /> */}
+            {/* <ResizablePanel defaultSize={50} minSize={30}> */}
               <div className="h-full overflow-hidden">
                 <ResumeStylingPage 
                   data={resumeData.content} 
@@ -147,10 +147,11 @@ function ResumeEditPageContent() {
                     }))
                   }}
                   onShowAIGuide={(type) => setActiveInstruction(type)}
+                  chat_log = {resumeData.chat_log}
                 />
               </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+            {/* </ResizablePanel>
+          </ResizablePanelGroup> */}
         </main>
       </div>
       {showJobList && (
