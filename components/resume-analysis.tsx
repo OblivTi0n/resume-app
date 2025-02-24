@@ -20,46 +20,11 @@ import {
   ArrowRight,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { ResumeContent, Responsibility } from '@/types/resume'
 
 // -------------------------------------------------------------------------
-// Added new types and props for passing in resume content:
+// Updated component signature to receive resumeContent from props.
 // -------------------------------------------------------------------------
-type Responsibility = { text: string; mode: any } | string
-
-export interface ResumeContent {
-  personal_info: {
-    name: string
-    email: string
-    phone: string
-    linkedin: string
-    location: string
-    portfolio: string
-  }
-  professional_summary: string
-  education: {
-    university: string
-    location: string
-    degree: string
-    graduation_date: string
-    scholarship: string
-  }
-  work_experience: Array<{
-    company: string
-    location: string
-    role: string
-    start_date: string
-    end_date: string
-    responsibilities: Responsibility[]
-  }>
-  volunteer_experience: any[]
-  skills: string[]
-  projects: any[]
-  social_media_and_links: {
-    linkedin: string
-    portfolio: string
-  }
-}
-
 interface ResumeAnalysisProps {
   resumeContent: ResumeContent
   analysis?: AnalysisData
@@ -116,7 +81,7 @@ export default function ResumeAnalysis({ resumeContent, analysis }: ResumeAnalys
     console.log("Analyze Resume clicked");
     setIsAnalyzing(true);
     try {
-      const res = await fetch("http://localhost:3000/gemini", {
+      const res = await fetch("https://untitled19-916323492822.australia-southeast2.run.app/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -159,7 +124,7 @@ export default function ResumeAnalysis({ resumeContent, analysis }: ResumeAnalys
   // If analysis is empty or null, show a blank page with a detailed "Analyze Resume" card
   if (!analysisData) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6 h-full flex items-center justify-center overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-sm p-6 h-full flex items-center justify-center overflow-y-hidden">
         <div className="max-w-md w-full bg-white rounded-xl p-6">
           <div className="text-center">
             <FileText className="mx-auto h-12 w-12 text-gray-400" />
@@ -186,9 +151,7 @@ export default function ResumeAnalysis({ resumeContent, analysis }: ResumeAnalys
               </Button>
             </div>
             <div className="text-sm text-center">
-              <p className="font-medium text-blue-600 hover:text-blue-500">
-                Make sure your resume is already final before resume analysis so we can give you the best analysis
-              </p>
+              
             </div>
           </div>
         </div>
@@ -219,11 +182,10 @@ export default function ResumeAnalysis({ resumeContent, analysis }: ResumeAnalys
 
     resumeContent.work_experience.forEach((work) => {
       work.responsibilities.forEach((resp) => {
-        // Support both plain string or object with a text property
-        const respText =
-          typeof resp === "string" ? resp.toLowerCase() : resp.text.toLowerCase()
+        // Support both plain string or object with a text property (legacy data may be a string)
+        const respText = (typeof resp === "string" ? resp : (resp as Responsibility).text).toLowerCase()
         if (parts.some((part) => respText.includes(part))) {
-          const displayText = typeof resp === "string" ? resp : resp.text
+          const displayText = typeof resp === "string" ? resp : (resp as Responsibility).text
           matches.push({
             role: work.role,
             company: work.company,
@@ -323,7 +285,7 @@ export default function ResumeAnalysis({ resumeContent, analysis }: ResumeAnalys
   const data: AnalysisData = analysisData!
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 h-full flex flex-col overflow-y-auto">
+    <div>
       <h1 className="text-2xl font-bold mb-6">
         Resume Analysis
       </h1>

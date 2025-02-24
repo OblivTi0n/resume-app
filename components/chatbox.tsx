@@ -43,14 +43,22 @@ interface ChatBoxProps {
 }
 
 function ChatBox({ chatLog = [], activeInstruction, onCloseGuide, onUpdateResume, resumeData }: ChatBoxProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>(chatLog)
+  // Add a default assistant instructory message
+  const defaultAssistantMessage: ChatMessage = {
+    role: "assistant",
+    content: "Welcome! How can I assist you in improving your resume?",
+    timestamp: new Date().toISOString(),
+  };
+
+  // Initialize messages state with existing chatLog or the default message if empty
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    chatLog.length > 0 ? chatLog : [defaultAssistantMessage]
+  );
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const searchParams = useSearchParams()
   const resumeId = searchParams.get("id")
-
-
 
 const AI_INSTRUCTIONS: Record<string, AIInstruction> = {
   add_work_experience: {
@@ -98,7 +106,7 @@ const AI_INSTRUCTIONS: Record<string, AIInstruction> = {
     Output Format:
     
     Deliver the final bullet points in the following JSON format so that the user can directly add them to their resume:
-    json
+    
     {
       "work_experience": [
         {
@@ -128,9 +136,13 @@ const AI_INSTRUCTIONS: Record<string, AIInstruction> = {
     For the instruction ask the user regarding their work experience`
   },
 };
-  // Add this useEffect to sync with incoming prop changes
+  // Sync with incoming prop changes: if chatLog is empty, use the default message.
   useEffect(() => {
-    setMessages(chatLog)
+    if (chatLog.length > 0) {
+      setMessages(chatLog)
+    } else {
+      setMessages([defaultAssistantMessage])
+    }
   }, [chatLog])
 
   // Add this useEffect to scroll to bottom when messages update
@@ -151,82 +163,103 @@ console.log(currentInstruction)
     setIsLoading(true);
   
     try {
-      // Optimistically add user message
+      // Create a local updatedChatLog variable from current messages
+      const prevMessages = [...messages];
       const userMessageObject = {
         role: "user",
         content: inputMessage,
         timestamp: new Date().toISOString(),
       };
-  
-      setMessages((prev) => [...prev, userMessageObject]);
-  
-      // Determine payload based on whether an instruction is active
+      // Append the user's message locally
+      const updatedChatLog = [...prevMessages, userMessageObject];
+      setMessages(updatedChatLog);
+    
+      // Prepare payload to send to the server
       const requestBody: Record<string, string | undefined> = {
         resumeId,
         userMessage: inputMessage,
+        resumeData: JSON.stringify(resumeData), 
+        chatLog: JSON.stringify(updatedChatLog),
       };
-  
       if (currentInstruction) {
-        console.log(`currentInstruction: ${currentInstruction}`)
+        console.log(`currentInstruction: ${currentInstruction}`);
         requestBody.assistantMessage = currentInstruction.description;
-        requestBody.prompt = currentInstruction.prompt + (activeInstruction?.company ? `\n\nCompany: ${activeInstruction.company}` : '');
+        requestBody.prompt =
+          currentInstruction.prompt +
+          (activeInstruction?.company ? `\n\nCompany: ${activeInstruction.company}` : '');
       }
-  
+    
       // Send message to your server
-      const response = await fetch("http://localhost:3000/chat", {
+      const response = await fetch("https://untitled19-916323492822.australia-southeast2.run.app/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
       });
-  
+    
       if (!response.ok) {
         throw new Error("Failed to send message");
       }
-  
-      const aiMessage = await response.json();
-  
-      // Add this code to parse JSON if possible
-      try {
-        if (typeof aiMessage.content === 'string' && aiMessage.content.trim().startsWith('{')) {
-          const jsonContent = JSON.parse(aiMessage.content);
-          console.log('Parsed JSON:', jsonContent);
-          if (onUpdateResume) {
-            // For work experience
-              onUpdateResume(['work_experience'], jsonContent);
-            
-            // Add more instruction types here
-          }
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "assistant",
-              content: "i have added your new work experience, please click the 'Save' button to save your changes.",
-              timestamp: new Date().toISOString(),
-            },
-          ]);
-      
-          // Clear input
-          setInputMessage("");
-        }
-      } catch (e) {
-        console.log('Not JSON content');
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: aiMessage.content,
-            timestamp: new Date().toISOString(),
-          },
-        ]);
     
-        // Clear input
-        setInputMessage("");
-      }
-  
-      // Add AI response to local state
+      const aiMessage = await response.json();
       
+      // Ensure that if aiMessage.json exists as a string, we parse it into a JSON object
+      let jsonData = aiMessage.json;
+      if (jsonData && typeof jsonData === 'string') {
+        try {
+          jsonData = JSON.parse(jsonData);
+        } catch (err) {
+          console.error("Error parsing aiMessage.json:", err);
+        }
+      }
+      
+      // If a JSON object is returned from the server, update the corresponding resume section(s)
+      if (jsonData && typeof jsonData === "object") {
+        Object.entries(jsonData).forEach(([section, value]) => {
+          if (onUpdateResume) {
+            onUpdateResume([section], value);
+          }
+        });
+      }
+      
+      // Override the assistant's message if JSON updates exist
+      let messageToDisplay = aiMessage.message;
+      if (
+        jsonData &&
+        typeof jsonData === "object" &&
+        Object.keys(jsonData).length > 0
+      ) {
+        const updateMessages = Object.keys(jsonData).map((section) => {
+          if (section === "skills") return "skills list updated";
+          if (section === "work_experience") return "work experience updated";
+          // For any additional sections, use a generic update message
+          return `${section} updated`;
+        });
+        messageToDisplay = updateMessages.join(", ");
+      }
+
+      // Always use the (potentially overridden) message field for the assistant's message
+      const assistantMessageObject = {
+        role: "assistant",
+        content: messageToDisplay,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Append the assistant's message locally
+      updatedChatLog.push(assistantMessageObject);
+      setMessages(updatedChatLog);
+
+      // Update the chat log in Supabase with the new messages array
+      const { error: updateError } = await supabase
+        .from("resumes")
+        .update({ chat_log: updatedChatLog })
+        .eq("id", resumeId);
+      if (updateError) {
+        console.error("Failed to update chat log in Supabase:", updateError);
+      }
+
+      setInputMessage("");
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -243,10 +276,30 @@ console.log(currentInstruction)
     }
   }
 
+  // Function to clear the chat log
+  const handleClearChat = async () => {
+    const clearMessages = [defaultAssistantMessage];
+    setMessages(clearMessages);
+    if (resumeId) {
+      const { error: updateError } = await supabase
+        .from("resumes")
+        .update({ chat_log: clearMessages })
+        .eq("id", resumeId);
+      if (updateError) {
+        console.error("Failed to clear chat log:", updateError);
+      }
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 h-full flex flex-col">
+    <div className="bg-white rounded-xl shadow-sm p-6 h-full overflow-hidden flex flex-col">
+      <div className="flex items-center justify-end mb-4">
+        <Button variant="outline" size="sm" onClick={handleClearChat}>
+          Clear Chat
+        </Button>
+      </div>
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto mb-4 pr-4 -mr-4">
+      <div className="flex-1 overflow-y-auto mb-4 pr-2 -mr-4 custom-scrollbar">
         {messages.map((message, index) => (
           <ChatMessage
             key={index}
@@ -290,6 +343,31 @@ console.log(currentInstruction)
         )}
       </div>
       
+      {/* Prewritten question bubbles */}
+      <div className="flex space-x-2 mb-2">
+        <button
+          type="button"
+          onClick={() => setInputMessage("How can I improve my skills section?")}
+          className="rounded-[980px] bg-blue-100 px-4 py-2 text-blue-700 text-sm shadow"
+        >
+          Improve Skills
+        </button>
+        <button
+          type="button"
+          onClick={() => setInputMessage("What should I add to my work experience?")}
+          className="rounded-[980px] bg-blue-100 px-4 py-2 text-blue-700 text-sm shadow"
+        >
+          Work Experience Help
+        </button>
+        <button
+          type="button"
+          onClick={() => setInputMessage("Can you help me tailor my resume for a new job?")}
+          className="rounded-[980px] bg-blue-100 px-4 py-2 text-blue-700 text-sm shadow"
+        >
+          Tailor Resume
+        </button>
+      </div>
+      
       {/* Input area */}
       <div className="mt-auto space-y-2">
         <div className="relative flex items-center bg-white rounded-2xl shadow-sm border p-2">
@@ -321,6 +399,26 @@ console.log(currentInstruction)
           Messages are processed by AI. Verify important information.
         </p>
       </div>
+
+      {/* Add the scrollbar styling similar to rightIsland.tsx */}
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: rgba(0, 0, 0, 0.3);
+          border-radius: 4px;
+          border: 2px solid transparent;
+          background-clip: padding-box;
+        }
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
+        }
+      `}</style>
     </div>
   )
 }

@@ -1,56 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import ResumeView from "@/components/Resumeview";
 import ResumeEditor from "@/components/rightIsland";
 import ChatBox from "@/components/chatbox"
+import ResumeAnalysis from "./resume-analysis";
+import AnalysisScore from "@/components/analysis-score";
+
+// Import the common types:
+import { ResumeContent, Responsibility, WorkExperience } from "@/types/resume";
 
 // ---------------------
 // Define Interfaces & Types
 // ---------------------
-interface Responsibility {
-  text: string;
-  oldText?: string;
-  mode?: "new" | "deletion" | "edit" | null;
-}
-interface WorkExperience {
-  company: string;
-  location: string;
-  role: string;
-  start_date: string;
-  end_date: string;
-  responsibilities: Responsibility[];
-  mode?: "new" | null;
-}
-export interface ResumeContent {
-  personal_info: {
-    name: string;
-    location: string;
-    linkedin: string;
-    phone: string;
-    email: string;
-    portfolio: string;
-  };
-  professional_summary: string;
-  education: {
-    university: string;
-    location: string;
-    degree: string;
-    graduation_date: string;
-    scholarship: string;
-  };
-  work_experience: WorkExperience[];
-  volunteer_experience: any[];
-  skills: string[];
-  projects: any[];
-  social_media_and_links: {
-    linkedin: string;
-    portfolio: string;
-  };
-}
-
 export interface ResumeStylingProps {
+  title: string;
   data: ResumeContent;
   onUpdate: (newData: ResumeContent) => void;
   onChatUpdate?: (message: { role: string; content: string; timestamp: string }) => void;
@@ -60,16 +25,36 @@ export interface ResumeStylingProps {
     content: string;
     timestamp: string;
   }>;
+  linkedJobs: {
+    id: string;
+    title: string;
+    location: string;
+  }[];
+  onTailorToJob?: () => void;
+  resumeType: "base" | "tailored";
+  onShowJobList?: () => void;
+  analysis?: any
 }
 
 export default function ResumeStylingPage({
+  title,
   data,
   onUpdate,
   onShowAIGuide,
-  chat_log
+  chat_log,
+  linkedJobs,
+  onTailorToJob,
+  resumeType,
+  onShowJobList,
+  analysis
 }: ResumeStylingProps) {
   // Local state for resume data (syncs with parent)
   const [resumeData, setResumeData] = useState<ResumeContent>(data);
+
+  // Added useLayoutEffect to scroll to top on mount
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     setResumeData(data);
@@ -77,6 +62,18 @@ export default function ResumeStylingPage({
 
   // New state for controlling the active AI instruction
   const [activeInstruction, setActiveInstruction] = useState<{ type: string; company?: string } | null>(null);
+
+  // Local function to update resume data.
+  // Updated to call onUpdate with the fresh state value.
+  const handleUpdateResume = (path: string[], value: any) => {
+    setResumeData(prev => {
+      const updated = { ...prev, [path[0]]: value };
+      if (onUpdate) {
+        onUpdate(updated);
+      }
+      return updated;
+    });
+  };
 
   // Update the active instruction and call parent's onShowAIGuide if needed
   const handleShowAIGuide = (type: string, params?: { company?: string }) => {
@@ -89,20 +86,28 @@ export default function ResumeStylingPage({
   };
 
   return (
-      <div className="w-full h-full flex-grow grid grid-cols-1 md:grid-cols-[40%_20%_40%] gap-4 overflow-auto">
-        <ResumeEditor
-          resumeDatas={resumeData}
-          onUpdate={onUpdate}
-          onShowAIGuide={handleShowAIGuide}
-        />
-        <div className="overflow-auto">
-          <ChatBox 
-            chatLog={chat_log || []} 
-            activeInstruction={activeInstruction}
-            onCloseGuide={handleCloseAIGuide}
-            resumeData={resumeData}
+      <div className="w-full h-full flex-grow grid grid-cols-5 md:grid-cols-[40%_25%_35%] gap-4 overflow-hidden bg-gray-100 overflow-y-auto">
+          
+          <ResumeEditor
+            title={title}
+            resumeDatas={resumeData}
+            analysis={analysis}
+            onLocalUpdate={(newData) => setResumeData(newData)}
+            onUpdate={(newData) => {
+              // Auto-save update, e.g., saving to Supabase.
+              onUpdate(newData);
+            }}
+            onShowAIGuide={handleShowAIGuide}
           />
-        </div>
+  <div className="mt-5 mb-5 overflow-hidden">
+            <ChatBox 
+              chatLog={chat_log || []} 
+              activeInstruction={activeInstruction}
+              onCloseGuide={handleCloseAIGuide}
+              resumeData={resumeData}
+              onUpdateResume={handleUpdateResume}
+            />
+          </div>
         <ResumeView data={resumeData} allignment={true} />
       </div>
   );

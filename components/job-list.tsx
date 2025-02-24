@@ -61,8 +61,8 @@ export default function JobList({ resumeId }: JobListProps) {
 
   // Handler to add a job to the resume.
   const addJobToResume = async (job: Job) => {
-    if (linkedJobs.length >= 5) {
-      alert("You have reached the maximum of 5 jobs linked to your resume.")
+    if (linkedJobs.length >= 1) {
+      alert("Only one job can be linked to your resume.")
       return
     }
     if (linkedJobs.includes(job.id)) {
@@ -100,8 +100,8 @@ export default function JobList({ resumeId }: JobListProps) {
     job.location.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  // Compute dream job slots: if a linked job exists for a slot, display its position and company; otherwise, show a placeholder.
-  const dreamJobSlots = Array.from({ length: 5 }, (_, index) => {
+  // Compute dream job slot: if a linked job exists, display its position and company; otherwise, show a placeholder.
+  const dreamJobSlots = Array.from({ length: 1 }, (_, index) => {
     if (index < linkedJobs.length) {
       const jobData = jobs.find(job => job.id === linkedJobs[index]);
       return jobData ? `${jobData.position} at ${jobData.company}` : `Dream Job ${index + 1}`;
@@ -122,10 +122,10 @@ export default function JobList({ resumeId }: JobListProps) {
           <div className="grid grid-cols-3 gap-6 p-6">
             {/* Dream Jobs Section */}
             <div className="col-span-1 space-y-4 sticky top-6">
-              <h2 className="text-lg font-semibold mb-3">Your Dream Jobs</h2>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h2 className="text-lg font-semibold mb-3">Add a job to tailor your resume to</h2>
+              {/* <p className="text-sm text-muted-foreground mb-4">
                 Add your 5 dream jobs so we know what type of applications to tailor your resume and cover letter to:
-              </p>
+              </p> */}
               {dreamJobSlots.map((slot, index) => (
                 <div key={index} className="p-3 bg-muted rounded-md flex items-center gap-2">
                   <Star className="h-4 w-4 text-yellow-400" />

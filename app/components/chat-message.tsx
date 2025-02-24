@@ -9,7 +9,7 @@ interface ChatMessageProps {
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ isAssistant, content, timestamp, attachmentLabel }) => (
-  <div className={`flex items-start gap-4 mb-4 p-4 rounded-lg ${isAssistant ? "bg-blue-50" : "bg-gray-50"}`}>
+  <div className={`flex items-start gap-4 mb-4 p-4 rounded-lg ${isAssistant ? "bg-blue-50" : "bg-gray-100"}`}>
     <div
       className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
         isAssistant ? "bg-blue-500" : "bg-green-500"

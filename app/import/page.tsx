@@ -98,10 +98,10 @@ export default function PDFViewer() {
     setIsConverting(true);
     try {
       // Convert text to JSON - updated endpoint URL
-      const convertResponse = await fetch('http://localhost:3000/', {
+      const convertResponse = await fetch('https://untitled19-916323492822.australia-southeast2.run.app', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: pdfText, llm: "gemini"}),
+        body: JSON.stringify({ text: pdfText, llm: "gemini" }),
       });
 
       if (!convertResponse.ok) {
@@ -130,17 +130,21 @@ export default function PDFViewer() {
         .from('resumes')
         .insert([{
           user_id: session.user.id,
-          title: '-', 
+          title: `Resume #${Math.floor(Math.random() * 1000)}`, 
           type: 'base',
+          chat_log: [],
           content: parsedData
         }])
         .select();
 
       if (dbError) throw dbError;
 
-      // Store and redirect
+      // Extract the inserted resume's id
+      const resumeId = data[0].id;
+
+      // Store content in session storage and redirect with the resume id
       sessionStorage.setItem('resumeData', JSON.stringify(data[0].content));
-      router.push('/resumeedit');
+      router.push(`/resumeedit?id=${resumeId}`);
 
     } catch (err) {
       console.error('Error:', err);

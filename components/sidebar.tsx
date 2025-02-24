@@ -62,7 +62,7 @@ export function AppSidebar({ navigation = [] }: AppSidebarProps) {
               />
             </svg>
           </div>
-          {!isCollapsed && <span className="text-xl font-semibold">Resume Builder</span>}
+          {!isCollapsed && <span className="text-xl font-semibold">JobSuit</span>}
         </header>
         <nav className="px-2">
           <ul>

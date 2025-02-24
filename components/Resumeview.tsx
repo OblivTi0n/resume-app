@@ -1,6 +1,11 @@
 "use client";
 
+import { MoreHorizontal } from "lucide-react";
+import { Plus } from "lucide-react";
 import React, { useEffect, useRef, forwardRef, useState } from "react";
+import { Button } from "./ui/button";
+import { Minus } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 
 // ================================
 // ResumeContent Component
@@ -207,7 +212,42 @@ export default function ResumeView({ data, allignment }: ResumeViewProps) {
   }, [userZoom]); // add userZoom as a dependency
 
   return (
-    <div className="bg-gray-50">
+    <div className="bg-gray-100 rounded-xl shadow-sm max-h-screen overflow-hidden flex flex-col">
+      <header className="flex items-center justify-between mx-20 px-4 py-2 bg-white border-b rounded-bl-[15px] rounded-br-[15px]">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" className="text-gray-700 hover:bg-gray-100">
+            <LayoutGrid className="h-5 w-5 mr-2" />
+            Select template
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-gray-700 hover:bg-gray-100"
+            onClick={() => setUserZoom(prev => Math.max(prev - 0.1, 0.1))}
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <span className="text-gray-700 text-xl">Aa</span>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-gray-700 hover:bg-gray-100"
+            onClick={() => setUserZoom(prev => prev + 0.1)}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white">Download PDF</Button>
+          <Button variant="ghost" size="icon" className="text-gray-700 hover:bg-gray-100">
+            <MoreHorizontal className="h-5 w-5" />
+          </Button>
+        </div>
+      </header>
       {/* Inline styles */}
       <style>{`
         /* For print, force A4 pages */
@@ -310,62 +350,6 @@ export default function ResumeView({ data, allignment }: ResumeViewProps) {
         }
       `}</style>
 
-      {/* -------------------------------------------------------------------
-          Updated Control Buttons Container:
-          Added Zoom Out (-) and Zoom In (+) buttons along with Download PDF.
-      ------------------------------------------------------------------- */}
-      <div
-        style={{
-          position: "fixed",
-          top: "20px",
-          right: "20px",
-          zIndex: 10000,
-          display: "flex",
-          gap: "10px",
-        }}
-      >
-        <button
-          onClick={() => setUserZoom((prev) => Math.max(prev - 0.1, 0.1))}
-          style={{
-            padding: "10px 15px",
-            backgroundColor: "#0070f3",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          -
-        </button>
-
-        <button
-          style={{
-            padding: "10px 15px",
-            backgroundColor: "#0070f3",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          // Download PDF button removed
-        </button>
-
-        <button
-          onClick={() => setUserZoom((prev) => prev + 0.1)}
-          style={{
-            padding: "10px 15px",
-            backgroundColor: "#0070f3",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          +
-        </button>
-      </div>
-
       {/* Updated container that scrolls vertically without horizontal scrolling.
           Added a maxHeight so that the content is bounded vertically. */}
       <div
@@ -374,7 +358,9 @@ export default function ResumeView({ data, allignment }: ResumeViewProps) {
           overflowY: "auto",
           overflowX: "hidden",
           width: "100%",
-          maxHeight: "calc(100vh - 40px)" // adjust as necessary to account for controls/other elements
+          maxHeight: "calc(100vh - 40px)",
+          display: "flex",
+          justifyContent: "center",
         }}
       >
         <ResumeContent ref={resumeContentRef} data={data} />

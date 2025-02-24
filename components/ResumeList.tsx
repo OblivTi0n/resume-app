@@ -2,9 +2,11 @@
 
 import React, { useState } from 'react';
 import { PlusCircle, Edit3, Download, Trash2, Briefcase } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const ResumeList: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'base' | 'tailored'>('base');
+  const router = useRouter();
 
   const baseResumes = [
     {
@@ -37,7 +39,10 @@ const ResumeList: React.FC = () => {
               We suggest you create one or two of these at most, one for
               each role you are targeting.
             </p>
-            <button className="flex items-center text-blue-600 font-medium hover:text-blue-800 transition duration-300 rounded-full bg-blue-50 px-4 py-2">
+            <button 
+              onClick={() => router.push('/import')}
+              className="flex items-center text-blue-600 font-medium hover:text-blue-800 transition duration-300 rounded-full bg-blue-50 px-4 py-2"
+            >
               <PlusCircle className="mr-2" size={20} />
               Create New
             </button>
@@ -48,7 +53,10 @@ const ResumeList: React.FC = () => {
               A resume targeted to a specific job description and built
               off of a Base Resume.
             </p>
-            <button className="flex items-center text-blue-600 font-medium hover:text-blue-800 transition duration-300 rounded-full bg-blue-50 px-4 py-2">
+            <button 
+              onClick={() => router.push('/import')}
+              className="flex items-center text-blue-600 font-medium hover:text-blue-800 transition duration-300 rounded-full bg-blue-50 px-4 py-2"
+            >
               <PlusCircle className="mr-2" size={20} />
               Create New
             </button>
